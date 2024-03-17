@@ -1,30 +1,60 @@
 import React, { useState } from 'react'
+import toast, { Toaster } from 'react-hot-toast';
 import { FaUser } from "react-icons/fa";
 import { IoIosLock } from "react-icons/io";
 import {Link, useNavigate} from 'react-router-dom'
+import { BASEURL } from './confidential';
+import Spinner from './Spinner';
+import Navbar from './Navbar';
 export default function Login(){
     const [email, setemail] = useState()
     const [password, setpassword] = useState()
-    const [spinner, setspinner] = useState('hidden')
     const [message, setMessage] = useState("");
-    const [opac, setopac] = useState('')
+    const [show, setshow] = useState(false)
     let navigate=useNavigate('')
 
     const handlesubmit=async (e)=>{
 e.preventDefault();
 
-const data={email,password}
-console.log(data);
-if(email=='' || password==''){
-    setMessage('*Every input must be filled')
-}
-else{
-    setspinner('')
-    setopac('opacity-50')
+if(!password || !email){
+    toast.error('*Every input must be filled');
 
-} 
+    setshow(false)
+}
+
+else{
+   try {
+    setshow(true)
+    let url=BASEURL+'login'
+    const Grouped={email,password}
+    const data=await fetch(url,{
+        method:'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(Grouped)
+    })
+    const response=await data.json()
+    setshow(false)
+    // console.log(response);
+    if(response.success){
+        localStorage.setItem('email',email)
+        toast.success('Login Successfull');
+        window.location.replace('/')
+
     }
+    else{
+        toast.error(response.message);
+
+    }
+   } catch (error) {
+    console.log(error);
+   }
+    }
+}
     return(<>
+    <Toaster/>
     <div className="h-screen bgimg flex justify-center items-center  font-mons">
         <div className="box flex h-[350px] border w-[700px] items-center justify-between bg-white shadow-lg shadow-blue-400  rounded-lg px-5 xsm:justify-center xsm:mx-2 ">
             <div className="h-full  flex items-center w-80 justify-center  xsm:hidden">
@@ -64,6 +94,10 @@ else{
                 </div>
             </div>
         </div>
+        {show ? <div className='w-full h-screen fixed  left-0 bg-blue-50 opacity-80'>
+                <Spinner className='h-10 w-10' />
+
+            </div> : ''}
     </div>
     </>)
 }

@@ -1,10 +1,13 @@
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 
 export default function Class(){
-    let path=useLocation()
-    let board=path.state;
-    const [params,setparams]=useSearchParams()
-    let classvalue=params.get('class');
+    let path =useLocation()
+    let temp=path.pathname
+    let paths=temp.split('/')
+    let board=paths[1]
+    const params=useParams()
+    let classvalue=params.classvalue;
+    // console.log(params);
     const subject_10th_pseb=["English","Hindi","Agriculture","Computer Science","Mathematics","Punjabi A","Punjabi B","Social Studies","Health & Physical Education","Health Science","Information Technology","Science"]
     const subject_12th_pseb=["English","Computer Application","Geography","Agriculture","Mathematics","Punjabi","Environment Education","Chemistry","Physics","Biology","History","Political Science"]
     const subject_10th_cbse=["English Literature","English Communication","Hindi A","Hindi B","Regional Languages","Mathematics","Music","Social Studies","Science","Other"]
@@ -50,7 +53,7 @@ export default function Class(){
                 {
                     Boards[0][board][classvalue].map((item)=>{
                         return(<>
-                    <Link key={item} to='' className="flex justify-center items-center m-3 font-bold w-64 h-32 bg-teal-900 text-[#3d90e3] ">{item}</Link>
+                    <Link key={item} state={{board,classvalue}} to={`/${board}/${classvalue}/${item}`} className="flex justify-center items-center m-3 font-bold w-64 h-32 bg-teal-900 text-[#3d90e3] ">{item}</Link>
                         </>)
                     })
                 }

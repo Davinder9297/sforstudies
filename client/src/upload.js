@@ -1,12 +1,20 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { BASEURL } from "./confidential"
+import toast, { Toaster } from "react-hot-toast"
+import { useNavigate } from "react-router-dom"
 
 export default function Upload(){
     const [boards, setboards] = useState([])
     // const [universities, setuniversities] = useState([])
     const [courses, setcourses] = useState([])
     const [subjects, setsubjects] = useState([])
-    const [board_university, setboard_university] = useState()
-
+    const [subeducation, setsubeducation] = useState()
+    const [spinner, setspinner] = useState(false)
+    const [smallspinner, setsmallspinner] = useState(false)
+    const [subject, setsubject] = useState()
+    const [education, seteducation] = useState()
+const [semester, setsemester] = useState(0)
+const [doc, setdoc] = useState()
 const [university, setuniversity] = useState(false)
 
     const universities_name=["Punjabi University,Patiala (PUP)","Maharshi Dayanand University (MDU)"]
@@ -48,10 +56,11 @@ const [university, setuniversity] = useState(false)
 ["Computer Graphics","Data Communication Networking","Management Information Systems","Visual Basic"],
 ["Artificial Intelligence","E-commerce","Introduction to Net","Object Technologies Programming using Java"],
     ]
-    const [class_course, setclass_course] = useState()
+    const [course, setcourse] = useState()
     function Options(e){
 // console.log(e.target.value);
 let value=e.target.value;
+seteducation(value)
 if(value==="board"){
     setboards(boards_name)
     setcourses(classes)
@@ -65,25 +74,82 @@ else if(value==="university"){
 }
     }
     function Semester_subjects(id){
+        setsemester(id)
         // let value=e.target.value;
         // console.log(e);
-        if(board_university==="Punjabi University,Patiala (PUP)"){
+        if(subeducation==="Punjabi University,Patiala (PUP)"){
             setsubjects(pup_sub[id])
          }
-        else if(board_university==="Maharshi Dayanand University (MDU)"){
+        else if(subeducation==="Maharshi Dayanand University (MDU)"){
             setsubjects(mdu_sub[id])
         }
     }
     function Subject_selection(e){
         let value=e.target.value;
-        setclass_course(value)
+        setcourse(value)
         // console.log();
         if(!university){
-            setsubjects(Boards[0][board_university][value])
+            setsubjects(Boards[0][subeducation][value])
             
         }
     }
+
+    async function handleSubmit(){
+        try {
+            let email=localStorage.getItem('email')
+            let Data={education,email,subeducation,course,subject,doc,semester}
+            // console.log(Data);
+            let url=BASEURL+'upload'
+            let data=await fetch(url,{
+                method:'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(Data)
+            })
+            const response=await data.json()
+            // console.log(response);
+            if(response.success){
+                toast.success('Notes uploaded successfully');
+
+            }
+            else{
+                toast.error(response.message);
+
+            }
+        } catch (error) {
+            toast.error('Failed to fetch api');
+
+        }
+    }
+    async function handleDoc(evnt){
+        setsmallspinner(true)
+        // setspinner()
+        const formdata=new FormData()
+    //   console.log(evnt.target.files);
+      formdata.append("file",evnt.target.files[0]);
+      formdata.append("upload_preset","mystore")
+    const res= await fetch("https://api.cloudinary.com/v1_1/desiynbby/image/upload",{
+      method:"POST",
+      body:formdata,
+    })
+    const res2=await res.json();
+    // console.log(res2);
+    setdoc(res2.url)
+    setsmallspinner(false)
+
+}
+let navigate=useNavigate()
+useEffect(() => {
+  let email=localStorage.getItem('email')
+  if(!email){
+navigate('/login')
+  }
+}, [])
+
     return(<>
+        <Toaster/>
     <div className="flex justify-center items-center min-h-screen">
         <div className=" w-96 font-mons border pt-5 shadow-inner rounded pb-5">
                 <div className="text-xl font-semibold text-center">Upload Documents</div>
@@ -98,7 +164,7 @@ else if(value==="university"){
                     </label>
                     <label className="">
                         <p className="font-semibold mt-5">Select Board/University</p>
-                        <select onChange={(e)=>setboard_university(e.target.value)} className="w-full h-7 outline-none border border-1 cursor-pointer focus:border-[#b1d5fa]">
+                        <select onChange={(e)=>setsubeducation(e.target.value)} className="w-full h-7 outline-none border border-1 cursor-pointer focus:border-[#b1d5fa]">
                         <option selected id="" value="">--Select--</option>
 
                            {
@@ -142,7 +208,7 @@ else if(value==="university"){
                     </label>:''}
                     <label className="">
                         <p className="font-semibold mt-5">Select Subject</p>
-                        <select className="w-full h-7 outline-none border border-1 cursor-pointer focus:border-[#b1d5fa]">
+                        <select onChange={(e)=>setsubject(e.target.value)} className="w-full h-7 outline-none border border-1 cursor-pointer focus:border-[#b1d5fa]">
                               <option selected id="" value="">--Select--</option>
                             {
                                 subjects&&subjects.map((item,ind)=>{
@@ -155,11 +221,12 @@ else if(value==="university"){
                         </select>
                     </label>
                   
-                    <label className="">
-                        <p className="font-semibold mt-5">Upload Document</p>
-                        <input type="file" className=""/>
-                    </label>
-                    <button className="w-full py-2 bg-[#3d90e3] text-white rounded mt-5 hover:bg-[#4b88c5]">SUBMIT</button>
+                    <div className='flex space-x-5 relative w-[100%] items-center mt-4'>
+                        <p className="font-semibold font-mons">Upload notes</p>
+                    <input  required={true}   onChange={handleDoc} id="image" name="image" type="file" className="text-[#3d90e3] w-[60%]  bg-blue-100 border  rounded-lg  focus:outline-none focus:border-slate-500 hover:shadow" />
+                        {smallspinner?<div className="loader absolute top-0 z-20 right-10 h-8 w-8 "></div>:''}
+                   </div>
+                    <button disabled={smallspinner} onClick={handleSubmit} className="w-full py-2 bg-[#3d90e3] text-white rounded mt-5 hover:bg-[#4b88c5]">SUBMIT</button>
                 </div>
 
         </div>
